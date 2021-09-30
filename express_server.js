@@ -15,13 +15,28 @@ app.use(cookieParser());
 // Setting ejs as the template engine
 app.set("view engine", "ejs");
 
-//In urlDatabase
+// In urlDatabase
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
 
-//To generate the shortURL
+// Object to store the users data
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
+
+// To generate the shortURL
 function generateRandomString() {
   let randomStr = '';
   /*const alphaNum = 'ABCDEFGHIJKLMNOPQRSTUVWXYXabcdefghijklmnopqrstuvwxy1234567890';
@@ -35,6 +50,36 @@ function generateRandomString() {
   return randomStr;
 }
 
+// To Create a new user
+const createUser = function (name, email, password, users) {
+
+  //To generate a random user ID
+  const userId = generateRandomString();
+
+  // Adding user info to users object
+  users[userId] = {
+      id: userId,
+      name,
+      email,
+      password,
+    };
+
+  return userId;
+};
+
+// To find if user already exists
+const findUserByEmail = function (email, users) {
+  for (let userId in users) {
+    const user = users[userId];
+    if (email === user.email) {
+      return user;
+    }
+  }
+
+  return false;
+};
+
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -44,14 +89,18 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userId = req.cookies["user_id"];
+  console.log('users[userId] in urls : ', users[userId]);
+  const templateVars = { user: users[userId], urls: urlDatabase, username: req.cookies["username"] };
   //console.log('templateVars in urls : ',templateVars);
   res.render("urls_index", templateVars);
 });
 
-//To render to view page to Create New URL 
+// To render to view page to Create New URL 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const userId = req.cookies["user_id"];
+  console.log('users[userId] in urls/new : ',users[userId]);
+  const templateVars = { user: users[userId], urls: urlDatabase, username: req.cookies["username"] };
   res.render("urls_new", templateVars);
 });
 
@@ -74,13 +123,58 @@ app.get("/urls/new", (req, res) => {
   //res.render("/urls", templateVars);
 });*/
 
-//User login
+// To go to User Register Form
+app.get("/register", (req, res) => {
+ 
+  //const templateVars = { username: null };
+  const templateVars = { user: null };
+
+  res.render('register', templateVars);
+});
+
+// To add the new user to users object
+app.post("/register", (req, res) => {
+  console.log('req.body   :  ', req.body);
+  const name = req.body.name;
+  const email = req.body.email;
+  const password = req.body.password;
+  console.log('email after :', email);
+  if (email === '') {
+    res.status(400).send('Please Enter An Email ID!');
+    return;
+  } else if (password === '') {
+    res.status(400).send('Please Enter A Password!');
+  }
+
+  const userExist = findUserByEmail(email, users);
+
+  console.log('userExist:', userExist);
+
+  if (userExist) {
+    res.status(400).send('Sorry, User Already Exists!');
+    return;
+  }
+
+  
+  const userId = createUser(name, email, password, users);
+  console.log('userId****:', userId);
+
+  // To Set a user_id cookie containing the user's newly generated ID
+  res.cookie('user_id', userId);
+ 
+  // Redirect to '/urls' page
+  res.redirect('/urls');
+});
+
+
+// User login
 app.post("/login", (req, res) => {
   res.cookie("username",req.body["username"]);
   res.redirect('/urls');
 });
 
-//User logout and redirecting to url_index
+
+// User logout and redirecting to url_index
 app.post("/logout", (req, res) => {
   //res.cookie("username",req.body["username"]);
   console.log('username : ',req.cookies["username"]);
@@ -88,7 +182,7 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 });
 
-//To Create a new URL
+// To Create a new URL
 app.post("/urls/create", (req, res) => {
   const newlongURL = req.body.longURL;
   const shortURL = generateRandomString();
@@ -99,22 +193,25 @@ app.post("/urls/create", (req, res) => {
   res.redirect("/urls");
 });
 
-//To Delete the URL
+// To Delete the URL
 app.post("/urls/:shortURL/delete", (req, res) => {
   //console.log(urlDatabase[req.params.shortURL]); 
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");         // Redirect the client back to the urls_index page
 });
 
-//Rendering to urls_show page to update the URL
+// Rendering to urls_show page to update the URL
 app.post("/urls/:shortURL/edit", (req, res) => {
   //console.log(urlDatabase[req.params.shortURL]); 
+  const userId = req.cookies["user_id"];
   const longURL = urlDatabase[req.params.shortURL];
-  const templateVars = { shortURL: req.params.shortURL, longURL: longURL, username: req.cookies["username"]};
+  //const templateVars = { user: users[userId], shortURL: req.params.shortURL, longURL: longURL, username: req.cookies["username"]};
+  const templateVars = { user: users[userId], shortURL: req.params.shortURL, longURL: longURL };
+ 
   res.render("urls_show", templateVars);
 });
 
-//Showing URL list after Update
+// Showing URL list after Update
 app.post("/urls/:shortURL", (req, res) => {
   const updatedlongURL = req.body.newlongURL;
   urlDatabase[req.params.shortURL] = updatedlongURL;
@@ -122,7 +219,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
-//******Rendering to urls_show page*******/
+// ******Rendering to urls_show page*******/
 /*app.get("/urls/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   console.log('Inside get urls/shortURL****** ', longURL);
@@ -130,7 +227,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });*/
 
-//Redirecting to the LongURL website from url_show page clicking shortURL
+// Redirecting to the LongURL website from url_show page by clicking shortURL
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
