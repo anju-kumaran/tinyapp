@@ -1,6 +1,8 @@
-const express = require("express");
-const bodyParser = require("body-parser");
+const express = require('express');
+const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+const salt = bcrypt.genSaltSync(10);
 
 const PORT = 8080; // default port 8080
 
@@ -21,11 +23,6 @@ app.set("view engine", "ejs");
 
 
 // Object to store the URLs
-/*const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};*/
-
 const urlDatabase = {
   b6UTxQ: {
       longURL: "https://www.tsn.ca",
@@ -51,12 +48,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: bcrypt.hashSync("purple-monkey-dinosaur", salt)
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", salt)
   }
 }
 
@@ -81,7 +78,7 @@ const createUser = function (email, password, users) {
       id: userId,
       email,
       password,
-    };
+  };
 
   return userId;
 };
@@ -105,9 +102,14 @@ const findUserByEmail = function (email, users) {
 const authenticateUser = (email, password, users) => {
 
   const userExist = findUserByEmail(email, users);
-  if (userExist && userExist.password === password) {
+
+  if (userExist && bcrypt.compareSync(password, userExist.password)) {
     return userExist;
   }
+
+  // if (userExist && userExist.password === password) {
+  //   return userExist;
+  // }
 
   return false;
 };
@@ -135,12 +137,8 @@ const urlsForUser = function (userId) {
   const usersURLs = {};
 
   for (let urlId in urlDatabase) {
-    console.log('urls: ',urlId);
-    console.log('urls userID before if: ',urlDatabase[urlId]['userID']);
+  
     if (urlDatabase[urlId]['userID'] === userId) {
-      console.log('urls id: ',urlDatabase[urlId]['userID']);
-      console.log('urls longURL: ',urlDatabase[urlId]['longURL']);
-      console.log('urls urlDatabase: ',urlId);
       usersURLs[urlId] = urlDatabase[urlId];
     }
   }
@@ -218,8 +216,9 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  //const userId = createUser(name, email, password, users);
-  const userId = createUser(email, password, users);
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  const userId = createUser(email, hashedPassword, users);
 
   // To Set a user_id cookie containing the user's newly generated ID
   res.cookie('user_id', userId);
