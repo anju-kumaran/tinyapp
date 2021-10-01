@@ -17,7 +17,6 @@
     <% if(user) { %>
     <h3>My URLs</h3>
     <table class="table">
-     
       <thead>
         <tr>
           <th scope="col">Short URL</th>
@@ -27,7 +26,6 @@
         </tr>
       </thead>
       <tbody>
-       
           <% for(let url in urls) { %>
             <tr>
               <td><%= url %></td>
@@ -44,11 +42,7 @@
               </td>
             </tr>
           <% } %>
-        <% } else { %>
-          <tr>
-            <td>Sorry, You Need To<a href="/login" > Login</a> To View The URLs!!!</td>
-          </tr>
-          <% } %>
+        <% } %>     
       </tbody>
     </table>
   </main>
