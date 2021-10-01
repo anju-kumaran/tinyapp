@@ -14,8 +14,10 @@
   </header>
   
   <main style="margin: 1em;">
+    <% if(user) { %>
     <h3>My URLs</h3>
     <table class="table">
+     
       <thead>
         <tr>
           <th scope="col">Short URL</th>
@@ -25,22 +27,28 @@
         </tr>
       </thead>
       <tbody>
-        <% for(let url in urls) { %>
-          <tr>
-            <td><%= url %></td>
-            <td><%= urls[url] %></td>
-            <td> 
-            <form method='POST' action='/urls/<%= url %>/edit'>
-              <button type="submit" name="delete" value="Edit"  class="btn btn-outline-primary">Edit</button>
-            </form>
-           </td>
-            <td>
-                <form method='POST' action='/urls/<%= url%>/delete'>
-                <button type="submit" name="delete" value='Delete' class="btn btn-outline-danger">Delete</button>
+       
+          <% for(let url in urls) { %>
+            <tr>
+              <td><%= url %></td>
+              <td><%= urls[url]['longURL'] %></td>
+              <td> 
+              <form method='POST' action='/urls/<%= url %>/edit'>
+                <button type="submit" name="delete" value="Edit"  class="btn btn-outline-primary">Edit</button>
               </form>
             </td>
+              <td>
+                  <form method='POST' action='/urls/<%= url%>/delete'>
+                  <button type="submit" name="delete" value='Delete' class="btn btn-outline-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% } %>
+        <% } else { %>
+          <tr>
+            <td>Sorry, You Need To<a href="/login" > Login</a> To View The URLs!!!</td>
           </tr>
-        <% } %>
+          <% } %>
       </tbody>
     </table>
   </main>
