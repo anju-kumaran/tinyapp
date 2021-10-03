@@ -10,7 +10,6 @@ const generateRandomString = function() {
 
 };
 
-
 // To Create a new user
 const createUser = function(email, password, users) {
 
@@ -28,7 +27,6 @@ const createUser = function(email, password, users) {
 
 };
 
-
 // To find if user already exists
 const getUserByEmail = function (email, users) {
 
@@ -42,7 +40,6 @@ const getUserByEmail = function (email, users) {
   return false;
 };
 
-
 // To check the user authentication
 const authenticateUser = (email, password, users) => {
 
@@ -54,7 +51,6 @@ const authenticateUser = (email, password, users) => {
 
   return false;
 };
-
 
 // To Create a new URL
 const createNewURL = function(userId, newlongURL, urlDatabase) {
@@ -71,7 +67,6 @@ const createNewURL = function(userId, newlongURL, urlDatabase) {
   return shortURL;
 
 };
-
 
 // To fetch the URLs of the logged in user
 const urlsForUser = function(userId, urlDatabase) {

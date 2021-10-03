@@ -64,6 +64,11 @@ const users = {
 };
 
 
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+
 app.get("/", (req, res) => {
   
   const userId = req.session.user_id;
@@ -75,11 +80,6 @@ app.get("/", (req, res) => {
 
   res.redirect('/urls');
 
-});
-
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
 });
 
 
@@ -97,6 +97,126 @@ app.get("/urls", (req, res) => {
   const templateVars = { user: users[userId], urls: urlsList };
   
   res.render("urls_index", templateVars);
+
+});
+
+
+// To go to urls_new page to Create New URL
+app.get("/urls/new", (req, res) => {
+
+  const userId = req.session.user_id;
+ 
+  if (!userId) {
+    res.redirect('/login');
+  }
+
+  const templateVars = { user: users[userId] };
+  
+  res.render("urls_new", templateVars);
+
+});
+
+
+// To Create a new URL
+app.post("/urls", (req, res) => {
+
+  const userId = req.session.user_id;
+  if (!userId) {
+    return res.status(401).send("You Need To<a href='/login' > Login</a> To Create URL");
+  }
+
+  const newlongURL = req.body.longURL;
+  const shortURL = createNewURL(userId, newlongURL, urlDatabase);
+  
+  const templateVars = { user: users[userId], shortURL: shortURL, longURL: newlongURL };
+ 
+  res.render("urls_show", templateVars);
+
+});
+
+
+// To Show URL page if user is logged in and owns the URL for the given ID
+app.get("/urls/:shortURL", (req, res) => {
+
+  const userId = req.session.user_id;
+
+  // If user is not logged in
+  if (!userId) {
+    return res.status(401).send("You Need To<a href='/login' > Login</a> To View URL");
+  }
+
+  
+  // If a URL for the given ID does not exist
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(401).send("URL for the given ID does not exist");
+  }
+ 
+  // If user is logged in but does not own the URL for the given ID:
+  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
+    return res.status(401).send("You don't own the URL for the given ID ");
+  }
+
+  const templateVars = { user: users[userId], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL'] };
+ 
+  res.render("urls_show", templateVars);
+
+});
+
+
+// To update the URL and go to /urls page
+app.post("/urls/:shortURL", (req, res) => {
+
+  const userId = req.session.user_id;
+
+  // If user is not logged in
+  if (!userId) {
+    return res.status(401).send("You Need To<a href='/login' > Login</a> To edit URL");
+  }
+ 
+  // If user is logged in but does not own the URL for the given ID:
+  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
+    return res.status(401).send("You don't own the URL for the given ID ");
+  }
+
+  const updatedlongURL = req.body.newlongURL;
+  urlDatabase[req.params.shortURL]['longURL'] = updatedlongURL;
+
+  res.redirect("/urls");
+  
+});
+
+
+// To Delete the URL and redirect back to the urls_index page
+app.post("/urls/:shortURL/delete", (req, res) => {
+
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    return res.status(401).send("You Need To<a href='/login' > Login</a> To Delete URL");
+  }
+
+  // If user is logged in but does not own the URL for the given ID:
+  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
+    return res.status(401).send("You don't own the URL for the given ID ");
+  }
+  
+  delete urlDatabase[req.params.shortURL];
+  
+  res.redirect("/urls");
+
+});
+
+
+// Redirecting to the LongURL website from url_show page by clicking shortURL
+app.get("/u/:shortURL", (req, res) => {
+
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(401).send("URL for the given ID does not exist");
+  }
+
+  const longURL = urlDatabase[req.params.shortURL]['longURL'];
+ 
+  res.redirect(longURL);
 
 });
 
@@ -194,124 +314,6 @@ app.post("/logout", (req, res) => {
   
   req.session = null;
   res.redirect('/urls');
-
-});
-
-
-// To go to urls_new page to Create New URL
-app.get("/urls/new", (req, res) => {
-
-  const userId = req.session.user_id;
- 
-  if (!userId) {
-    res.redirect('/login');
-  }
-
-  const templateVars = { user: users[userId] };
-  
-  res.render("urls_new", templateVars);
-
-});
-
-
-// To Create a new URL
-app.post("/urls", (req, res) => {
-
-  const userId = req.session.user_id;
-  if (!userId) {
-    return res.status(401).send("You Need To<a href='/login' > Login</a> To Create URL");
-  }
-
-  const newlongURL = req.body.longURL;
-  const shortURL = createNewURL(userId, newlongURL, urlDatabase);
-  
-  const templateVars = { user: users[userId], shortURL: shortURL, longURL: newlongURL };
- 
-  res.render("urls_show", templateVars);
-
-});
-
-
-// To Show URL page if user is logged in and owns the URL for the given ID
-app.get("/urls/:shortURL", (req, res) => {
-
-  const userId = req.session.user_id;
-
-  // If user is not logged in
-  if (!userId) {
-    return res.status(401).send("You Need To<a href='/login' > Login</a> To View URL");
-  }
-
-  // If a URL for the given ID does not exist
-  if (!urlDatabase[req.params.shortURL]) {
-    return res.status(401).send("URL for the given ID does not exist");
-  }
- 
-  // If user is logged in but does not own the URL for the given ID:
-  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
-    return res.status(401).send("You don't own the URL for the given ID ");
-  }
-
-  const templateVars = { user: users[userId], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]['longURL'] };
- 
-  res.render("urls_show", templateVars);
-
-});
-
-
-app.post("/urls/:shortURL", (req, res) => {
-
-  const userId = req.session.user_id;
-
-  // If user is not logged in
-  if (!userId) {
-    return res.status(401).send("You Need To<a href='/login' > Login</a> To edit URL");
-  }
- 
-  // If user is logged in but does not own the URL for the given ID:
-  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
-    return res.status(401).send("You don't own the URL for the given ID ");
-  }
-
-  const updatedlongURL = req.body.newlongURL;
-  urlDatabase[req.params.shortURL]['longURL'] = updatedlongURL;
-
-  res.redirect("/urls");
-  
-});
-
-
-// To Delete the URL and redirect back to the urls_index page
-app.post("/urls/:shortURL/delete", (req, res) => {
-
-  const userId = req.session.user_id;
-
-  if (!userId) {
-    return res.status(401).send("You Need To<a href='/login' > Login</a> To Delete URL");
-  }
-
-  // If user is logged in but does not own the URL for the given ID:
-  if (urlDatabase[req.params.shortURL]['userID'] !== userId) {
-    return res.status(401).send("You don't own the URL for the given ID ");
-  }
-  
-  delete urlDatabase[req.params.shortURL];
-  
-  res.redirect("/urls");
-
-});
-
-
-// Redirecting to the LongURL website from url_show page by clicking shortURL
-app.get("/u/:shortURL", (req, res) => {
-
-  if (!urlDatabase[req.params.shortURL]) {
-    return res.status(401).send("URL for the given ID does not exist");
-  }
-
-  const longURL = urlDatabase[req.params.shortURL]['longURL'];
- 
-  res.redirect(longURL);
 
 });
 
