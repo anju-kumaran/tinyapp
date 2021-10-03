@@ -3,16 +3,11 @@ const bcrypt = require('bcryptjs');
 // To find if user already exists
 const getUserByEmail = function (email, users) {
 
-  for (let userId in users) {
-
+  for (const userId in users) {
     const user = users[userId];
-
     if (email === user.email) {
-
       return user;
-
-    }
-    
+    }  
   }
 
   return false;
@@ -25,9 +20,7 @@ const authenticateUser = (email, password, users) => {
   const userExist = getUserByEmail(email, users);
 
   if (userExist && bcrypt.compareSync(password, userExist.password)) {
-
     return userExist;
-
   }
 
   return false;
