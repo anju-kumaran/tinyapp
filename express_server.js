@@ -3,8 +3,11 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(10);
+const { createUser } = require("./helpers");
 const { getUserByEmail } = require("./helpers");
 const { authenticateUser } = require("./helpers");
+const { createNewURL } = require("./helpers");
+const { urlsForUser } = require("./helpers");
 
 const PORT = 8080; // default port 8080
 
@@ -61,68 +64,6 @@ const users = {
 };
 
 
-// To generate the shortURL
-const generateRandomString = function() {
-
-  let randomStr = '';
-  randomStr = Math.random().toString(36).substring(2, 8);
-
-  return randomStr;
-
-};
-
-
-// To Create a new user
-const createUser = function(email, password, users) {
-
-  // To generate a random user ID
-  const userId = generateRandomString();
-
-  // Adding user info to users object
-  users[userId] = {
-    id: userId,
-    email,
-    password,
-  };
-
-  return userId;
-
-};
-
-
-// To Create a new URL
-const createNewURL = function(userId, newlongURL) {
-
-  // To generate a random short URL
-  const shortURL = generateRandomString();
-
-  // Adding new URl to urlDatabase object
-  urlDatabase[shortURL] = {
-    longURL: newlongURL,
-    userID: userId
-  };
-
-  return shortURL;
-
-};
-
-
-// To fetch the URLs of the logged in user
-const urlsForUser = function(userId) {
-
-  const usersURLs = {};
-
-  for (const urlId in urlDatabase) {
-    if (urlDatabase[urlId]['userID'] === userId) {
-      usersURLs[urlId] = urlDatabase[urlId];
-    }
-  }
-  
-  return usersURLs;
-
-};
-
-
 app.get("/", (req, res) => {
   
   const userId = req.session.user_id;
@@ -152,7 +93,7 @@ app.get("/urls", (req, res) => {
     return res.status(403).send("Please <a href='/login' >Login</a> to view the URLs");
   }
   
-  const urlsList = urlsForUser(userId);
+  const urlsList = urlsForUser(userId, urlDatabase);
   const templateVars = { user: users[userId], urls: urlsList };
   
   res.render("urls_index", templateVars);
@@ -270,7 +211,7 @@ app.post("/urls/create", (req, res) => {
 
   const userId = req.session.user_id;
   const newlongURL = req.body.longURL;
-  const shortURL = createNewURL(userId, newlongURL);
+  const shortURL = createNewURL(userId, newlongURL, urlDatabase);
   
   const templateVars = { user: users[userId], shortURL: shortURL, longURL: newlongURL };
  
