@@ -31,8 +31,8 @@
               <td><%= url %></td>
               <td><%= urls[url]['longURL'] %></td>
               <td> 
-              <form method='POST' action='/urls/<%= url %>/edit'>
-                <button type="submit" name="delete" value="Edit"  class="btn btn-outline-primary">Edit</button>
+              <form method='GET' action='/urls/<%= url %>'>
+                <button type="submit" name="edit" value="Edit" class="btn btn-outline-primary">Edit</button>
               </form>
             </td>
               <td>
