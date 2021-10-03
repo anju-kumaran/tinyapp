@@ -112,7 +112,7 @@ const urlsForUser = function(userId) {
 
   const usersURLs = {};
 
-  for (let urlId in urlDatabase) {
+  for (const urlId in urlDatabase) {
     if (urlDatabase[urlId]['userID'] === userId) {
       usersURLs[urlId] = urlDatabase[urlId];
     }
@@ -270,10 +270,11 @@ app.post("/urls/create", (req, res) => {
 
   const userId = req.session.user_id;
   const newlongURL = req.body.longURL;
+  const shortURL = createNewURL(userId, newlongURL);
   
-  createNewURL(userId, newlongURL);
-  
-  res.redirect("/urls");
+  const templateVars = { user: users[userId], shortURL: shortURL, longURL: newlongURL };
+ 
+  res.render("urls_show", templateVars);
 
 });
 
